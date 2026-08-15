@@ -1,0 +1,13 @@
+{
+  "name": "everizing-toss",
+  "version": "0.1.0",
+  "description": "에버라이징 스트래티지 - 토스증권 버전",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test:toss": "node scripts/test-toss.js",
+    "eval:dry": "node scripts/run-dry-eval.js"
+  }
+}
