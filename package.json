@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=18"
   },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0"
+  },
   "scripts": {
     "test:toss": "node scripts/test-toss.js",
     "eval:dry": "node scripts/run-dry-eval.js"
