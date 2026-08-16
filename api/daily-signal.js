@@ -1,5 +1,7 @@
 /**
  * 일일 시그널 API (Vercel Cron)
+ * - 23:00 KST: 상태 리포트
+ * - 07:30 KST: 종가 기준 규칙 평가 + 리포트 (메인)
  */
 
 const { TossClient } = require('../lib/toss');
@@ -28,19 +30,35 @@ async function handler(req, res) {
     const state = await loadState();
     const today = new Date().toISOString().slice(0, 10);
 
-    if (state.lastEvalDate === today) {
-      return res.status(200).json({
-        ok: true,
-        message: '오늘 이미 평가 완료 (중복 방지)',
-        date: today,
-      });
-    }
+    // 한국 시간으로 아침(메인 평가) / 저녁(상태) 구분
+    const kstHour = (new Date().getUTCHours() + 9) % 24;
+    const isMorningSlot = kstHour >= 6 && kstHour < 12;
+    const alreadyRuledToday = state.lastRuleEvalDate === today;
 
-    const evalReport = await runDailyEvaluation({
-      toss,
-      state,
-      dryRun: false,
-    });
+    let evalReport = {
+      date: today,
+      isUsTradingDay: true,
+      signals: [],
+      stateUpdates: {},
+      logs: [],
+    };
+
+    // 규칙 평가: 하루에 1번만 (가능하면 아침 슬롯)
+    const shouldRunRules = !alreadyRuledToday && (isMorningSlot || !state.lastRuleEvalDate);
+
+    if (shouldRunRules) {
+      evalReport = await runDailyEvaluation({
+        toss,
+        state,
+        dryRun: false,
+      });
+    } else {
+      evalReport.logs.push(
+        alreadyRuledToday
+          ? '오늘은 이미 규칙 평가 완료 → 상태 리포트만'
+          : '저녁 슬롯 → 상태 리포트만'
+      );
+    }
 
     let usdKrw = null;
     try {
@@ -86,16 +104,18 @@ async function handler(req, res) {
       lastEvalAt: new Date().toISOString(),
       lastEvalDate: today,
     };
+    if (shouldRunRules) {
+      newState.lastRuleEvalDate = today;
+    }
     await saveState(newState);
 
     const sent = [];
-    for (const signal of evalReport.signals) {
+    for (const signal of evalReport.signals || []) {
       const approvalId = crypto.randomBytes(8).toString('hex');
       await setPendingApproval(approvalId, {
         ...signal,
         createdAt: new Date().toISOString(),
       });
-
       await tg.sendSellSignal({
         symbol: signal.symbol,
         rule: signal.rule,
@@ -119,8 +139,9 @@ async function handler(req, res) {
     };
     const accountReturn = calcAccountReturn(totalEquityKrw, ledger.netInvestedKrw);
 
+    const slotLabel = isMorningSlot ? '아침(규칙평가)' : '저녁(상태)';
     const portfolioText = buildPortfolioReport({
-      signals: evalReport.signals,
+      signals: evalReport.signals || [],
       holdingsMap,
       priceMap,
       hostedLots: newState.hostedLots || [],
@@ -128,7 +149,7 @@ async function handler(req, res) {
       tradeStats: state.tradeStats || {},
       positionMeta: state.positionMeta || {},
       usdKrw,
-      date: today,
+      date: `${today} ${slotLabel}`,
       accountReturn,
       cashLedger: ledger,
     });
@@ -144,6 +165,8 @@ async function handler(req, res) {
     res.status(200).json({
       ok: true,
       date: today,
+      slot: slotLabel,
+      rulesRun: shouldRunRules,
       signals: sent,
       logs: evalReport.logs,
     });
