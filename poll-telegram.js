@@ -15,11 +15,18 @@ var data=curlJson(["https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN
 var updates=data.result||[];
 updates.forEach(function(u){
   offset=u.update_id+1;
+  if (u.callback_query) {
+    execFileSync("node",["handle-callback.js", JSON.stringify(u)],{cwd:"/home/ubuntu/everizing-toss",stdio:"inherit"});
+    return;
+  }
   var msg=u.message||{};
   var text=(msg.text||"").trim();
   var chat=String((msg.chat&&msg.chat.id)||"");
   if (chat && chat!==String(process.env.TELEGRAM_CHAT_ID)) return;
   if (text==="/port" || text==="/start") {
+    execFileSync("node",["send-digest.js"],{cwd:"/home/ubuntu/everizing-toss",stdio:"inherit"});
+  }
+  if (text==="/cash") {
     execFileSync("node",["send-digest.js"],{cwd:"/home/ubuntu/everizing-toss",stdio:"inherit"});
   }
   if (text.indexOf("/in ")===0 || text.indexOf("/out ")===0) {
