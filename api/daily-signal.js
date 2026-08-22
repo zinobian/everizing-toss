@@ -12,6 +12,7 @@ const { buildPortfolioReport } = require('../lib/portfolio-report');
 const { snapshotFromHoldings, diffSnapshots, formatBalanceChanges } = require('../lib/balance-watch');
 const { calcAccountReturn, formatCashSummary } = require('../lib/cash-ledger');
 const { MAIN_SYMBOLS } = require('../lib/config');
+const { normalizeHolding } = require('../lib/holdings');
 const crypto = require('crypto');
 
 async function handler(req, res) {
@@ -84,7 +85,7 @@ async function handler(req, res) {
         const sym = item.symbol;
         holdingsMap[sym] = {
           quantity: Number(item.quantity || item.qty || 0),
-          avgCost: Number(item.averagePrice || item.avgPrice || item.purchaseAvgPrice || 0),
+          avgCost: Number(item.averagePurchasePrice || item.averagePrice || item.avgPrice || item.purchaseAvgPrice || 0),
           marketValue: Number(item.marketValue || item.evalAmount || 0),
           lastPrice: priceMap[sym],
         };
@@ -157,9 +158,9 @@ async function handler(req, res) {
     const cashText = formatCashSummary(ledger, accountReturn);
 
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-      if (balanceChangeText) await tg.sendMessage(balanceChangeText);
-      await tg.sendMessage(portfolioText);
-      await tg.sendMessage(cashText);
+      if (balanceChangeText) // await tg.sendMessage(balanceChangeText);
+      // await tg.sendMessage(portfolioText);
+      // // await tg.sendMessage(cashText);
     }
 
     res.status(200).json({
