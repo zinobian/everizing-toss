@@ -101,6 +101,7 @@ async function handler(req, res) {
       positions: evalReport.stateUpdates.positions || state.positions,
       hostedLots: evalReport.stateUpdates.hostedLots || state.hostedLots,
       positionMeta: evalReport.stateUpdates.positionMeta || state.positionMeta,
+      lastHostedTickDate: evalReport.stateUpdates.lastHostedTickDate || state.lastHostedTickDate,
       lastHoldingsSnapshot: state.lastHoldingsSnapshot,
       lastEvalAt: new Date().toISOString(),
       lastEvalDate: today,
