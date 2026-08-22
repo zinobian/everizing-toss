@@ -109,6 +109,15 @@ if (!callback) { console.log(JSON.stringify({ok:true,skip:true})); process.exit(
     moneyFlowNote = "15일 재투자 → "+pending.symbol;
   }
 
+    // 매도 후 시작일 리셋 (다음 모으기부터 새 구간)
+  state.positionMeta = state.positionMeta || {};
+  var pm = state.positionMeta[pending.symbol] || {};
+  pm.lastSellDate = new Date().toISOString().slice(0, 10);
+  pm.lastSellRule = pending.rule;
+  pm.startDate = null; // 리셋 → 이후 첫 매수/보유 감지 시 다시 설정
+  pm.collectRounds = 0;
+  state.positionMeta[pending.symbol] = pm;
+
   recordTrade(state, {
     symbol: pending.symbol,
     side: "SELL",

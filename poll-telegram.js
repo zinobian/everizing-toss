@@ -29,7 +29,7 @@ updates.forEach(function(u){
   if (text==="/cash") {
     execFileSync("node",["send-digest.js"],{cwd:"/home/ubuntu/everizing-toss",stdio:"inherit"});
   }
-  if (text.indexOf("/in ")===0 || text.indexOf("/out ")===0) {
+  if (text.indexOf("/in ")===0 || text.indexOf("/out ")===0 || text.indexOf("/입금 ")===0 || text.indexOf("/출금 ")===0 || text.indexOf("/fx ")===0 || text.indexOf("/환전 ")===0) {
     execFileSync("node",["cash-cmd.js", text],{cwd:"/home/ubuntu/everizing-toss",stdio:"inherit"});
   }
 });
