@@ -35,7 +35,13 @@ function num(v){ if(v==null||v==="") return 0; if(typeof v==="object") return Nu
     var extra=SHARE_LOT_SYMBOLS.indexOf(x.symbol)>=0?(" 온주 "+Math.floor(x.qty)+"/15"):"";
     lines.push(x.symbol+" "+(x.p>=0?"+":"")+x.p.toFixed(2)+"%  "+usd(x.last)+" /평단 "+usd(x.avg)+extra);
   });
-  lines.push(""); lines.push("5종목 일22만 모으기 · GDXU/UBOT 예산통장");
+  lines.push("");   try {
+    var lb = state.lotBudget || {};
+    var g = lb.GDXU || {};
+    var u = lb.UBOT || {};
+    lines.push("예산통장 GDXU "+Math.round(Number(g.krw||0)).toLocaleString("ko-KR")+"원 / UBOT "+Math.round(Number(u.krw||0)).toLocaleString("ko-KR")+"원");
+  } catch(e){}
+  lines.push("5종목 일22만 모으기 · GDXU/UBOT 예산통장");
   curlJson(["-X","POST","https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/sendMessage","-d","chat_id="+process.env.TELEGRAM_CHAT_ID,"-d","text="+encodeURIComponent(lines.join("\n"))]);
   console.log(JSON.stringify({ok:true,n:rows.length}));
 })().catch(function(e){ console.error(e); process.exit(1); });
